@@ -13,8 +13,10 @@ CHUNKS_FILE = DATA_DIR / "chunks.jsonl"    # 分块结果
 BM25_FILE = DATA_DIR / "bm25.pkl"          # BM25 索引
 QDRANT_PATH = str(DATA_DIR / "qdrant")     # 向量库本地存储
 
-# 模型
-EMBEDDING_MODEL = "BAAI/bge-m3"
+# ---- 硅基流动（embedding + rerank）----
+SILICONFLOW_API_KEY = os.getenv("SILICONFLOW_API_KEY", "")
+SILICONFLOW_BASE_URL = "https://api.siliconflow.cn/v1"
+EMBEDDING_MODEL = "BAAI/bge-m3"               # 输出 1024 维
 RERANK_MODEL = "BAAI/bge-reranker-v2-m3"
 
 # DeepSeek
