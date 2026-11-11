@@ -1,3 +1,53 @@
+# ============================================================
+# Python 项目 .gitignore 模板
+# 用法：把本文件内容复制到你项目根目录，另存为 .gitignore
+# ============================================================
+
+# ---------- Python 编译产物 ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# ---------- 构建/分发产物 ----------
+build/
+dist/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ---------- 虚拟环境（最重要！）----------
+.venv/
+venv/
+ENV/
+env/
+.python-version
+
+# ---------- 包管理/工具缓存 ----------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+pip-log.txt
+pip-delete-this-directory.txt
+
 # ---------- 环境变量与密钥（务必忽略，禁止提交）----------
 .env
 .env.*
@@ -13,3 +63,33 @@ credentials.json
 *.iws
 *.ipr
 out/
+
+# ---------- VS Code ----------
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# ---------- Jupyter Notebook ----------
+.ipynb_checkpoints/
+
+# ---------- 打包/测试 ----------
+*.pot
+*.mo
+*.spec
+.tox/
+cover/
+
+# ---------- macOS 系统文件 ----------
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ---------- 日志与临时文件 ----------
+*.log
+*.tmp
+*.bak
+*.swp
+*~
