@@ -1,0 +1,15 @@
+# ---------- 环境变量与密钥（务必忽略，禁止提交）----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+credentials.json
+
+# ---------- PyCharm / JetBrains ----------
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
