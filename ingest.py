@@ -27,14 +27,16 @@ def split_by_headings(text: str):
     return blocks
 
 def clean_body(body):
-    """清洗：去图片、去纯链接行、压空行"""
-    body = re.sub(r"!\[[^\]]*\]\([^)]*\)","",body)
+    """清洗：去特殊字符、去图片、去纯链接行、压空行"""
+    body = re.sub(r"[\xa0\u3000]", " ", body)
+    body = re.sub(r"!\[[^]]*]\([^)]*\)","",body)
+    body = re.sub(r"\[([^]]*)]\([^)]*\)", r"\1", body)
     kept = []
     for line in body.split("\n"):
         s = line.strip()
         if not s:
             continue
-        if re.fullmatch(r"(\[[^\]]*\]\([^)]*\)[\s，,、；;]*)+",s):
+        if re.fullmatch(r"(\[[^]]*]\([^)]*\)[\s，,、；;]*)+",s):
             continue
         kept.append(s)
     return "\n".join(kept)
@@ -60,7 +62,7 @@ def chunk_file(path: Path, seen_hashes: set):
     text = path.read_text(encoding="utf-8")
     chunks = []
     for heading, body in split_by_headings(text):
-        if "目录" in heading and len(body) < 200:   # 跳过目录块
+        if "目录" in heading:   # 跳过目录块
             continue
         body = clean_body(body)
         if not body.strip():
