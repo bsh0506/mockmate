@@ -30,7 +30,7 @@ CHUNK_OVERLAP = 80      # 相邻 chunk 重叠字符数
 
 # 检索参数
 VECTOR_TOP_K = 20       # 粗召回每路取多少
-RERANK_TOP_N = 10        # 精排后保留几条
+RERANK_TOP_N = 5        # 精排后保留几条
 RRF_K = 60              # RRF 融合常数
 
 COLLECTION = "mianjing"
@@ -38,3 +38,14 @@ VECTOR_DIM = 1024
 
 # 生成参数
 TEMPERATURE = 0.1       # 调低抑制「编造」
+
+# ---- MySQL（业务数据：会话/问答/面试/评估记录）----
+MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
+MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))
+MYSQL_USER = os.getenv("MYSQL_USER", "root")
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")
+MYSQL_DB = os.getenv("MYSQL_DB", "mockmate")
+SQLALCHEMY_DATABASE_URL = (
+    f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}"
+    f"@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}?charset=utf8mb4"
+)

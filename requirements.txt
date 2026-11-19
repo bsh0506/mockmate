@@ -6,3 +6,7 @@ jieba>=0.42.1
 requests
 jieba3k
 lightrag
+streamlit
+sqlalchemy
+pydantic
+fastapi

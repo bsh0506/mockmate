@@ -8,10 +8,10 @@ from openai import OpenAI
 from lightrag import LightRAG, QueryParam
 from lightrag.llm.openai import openai_complete_if_cache, openai_embed
 from lightrag.utils import EmbeddingFunc
-from retrieve import Retriever
+from rag.retrieve import Retriever
 import config
 
-WORKING_DIR = "./data/lightrag"
+WORKING_DIR = "../data/lightrag"
 
 for name in ("lightrag", "httpx2", "openai"):
     logging.getLogger(name).setLevel(logging.ERROR)
@@ -78,7 +78,7 @@ async def main():
     )
     await rag.initialize_storages()
 
-    items = [it for it in load_eval_set("./data/eval/eval_set.jsonl") if it["category"] == "global"]
+    items = [it for it in load_eval_set(str(config.DATA_DIR / "eval" / "eval_set.jsonl")) if it["category"] == "global"]
 
     print(f"{'id':<6}{'传统RAG':<12}{'LightRAG':<12}")
     print("-" * 30)

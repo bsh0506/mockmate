@@ -3,7 +3,7 @@ import json
 import re
 from collections import defaultdict
 from openai import OpenAI
-from retrieve import Retriever
+from rag.retrieve import Retriever
 import config
 
 
@@ -44,41 +44,40 @@ def judge_coverage(judge, answer, gold_points):
     return min(covered, len(gold_points)) / len(gold_points)
 
 
-def main(k_list=(5, 10)):
+def main(n_list=(5, 10)):
     r = Retriever()
     judge = OpenAI(api_key=config.DEEPSEEK_API_KEY, base_url=config.DEEPSEEK_BASE_URL)
-    items = load_eval_set("./data/eval/eval_set.jsonl")
+    items = load_eval_set(str(config.DATA_DIR / "eval" / "eval_set.jsonl"))
 
     # ---------- 检索层：specific + relation ----------
-    for k in k_list:
+    for n in n_list:
         hit = defaultdict(float)
         cnt = defaultdict(int)
         for item in items:
             cat = item["category"]
             if cat == "global":
                 continue
-            hits = r.search(item["query"], top_n=k)
+            hits = r.search(item["query"], top_n=n)
             hit[cat] += multi_hop_hit(r, item["gold_chunks"], hits)
             cnt[cat] += 1
-        print(f"===== 检索层 top_n={k} =====")
-        print(f"{'类别':<10}{'题数':<6}{'hit@'+str(k)}")
+        print(f"===== 检索层 top_n={n} =====")
+        print(f"{'类别':<10}{'题数':<6}{'hit@'+str(n)}")
         for cat in sorted(cnt):
             print(f"{cat:<10}{cnt[cat]:<6}{hit[cat]/cnt[cat]:.0%}")
         print()
-
-    # ---------- 答案层：global（要点覆盖率） ----------
-    print("===== 答案层：global 要点覆盖率（LLM-as-Judge）=====")
-    cov_sum, cov_cnt = 0.0, 0
-    for item in items:
-        if item["category"] != "global":
-            continue
-        answer = r(item["query"])            # 走完整 RAG：检索 + 生成
-        cov = judge_coverage(judge, answer, item["gold_points"])
-        cov_sum += cov
-        cov_cnt += 1
-        print(f"  {item['id']}: {cov:.0%}   ({item['query'][:20]}...)")
-    if cov_cnt:
-        print(f"  平均覆盖率: {cov_sum/cov_cnt:.0%}")
+        # ---------- 答案层：global（要点覆盖率） ----------
+        print("===== 答案层：global 要点覆盖率（LLM-as-Judge）=====")
+        cov_sum, cov_cnt = 0.0, 0
+        for item in items:
+            if item["category"] != "global":
+                continue
+            answer = r(item["query"],top_n = n)            # 走完整 RAG：检索 + 生成
+            cov = judge_coverage(judge, answer, item["gold_points"])
+            cov_sum += cov
+            cov_cnt += 1
+            print(f"  {item['id']}: {cov:.0%}   ({item['query'][:20]}...)")
+        if cov_cnt:
+            print(f"  平均覆盖率: {cov_sum/cov_cnt:.0%}")
 
 
 if __name__ == "__main__":

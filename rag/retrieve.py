@@ -22,6 +22,11 @@ SYSTEM_PROMPT = """你是 MockMate，一位经验丰富的大厂面试官兼面�
         2. 像面对面辅导，口语化；不要用"根据资料显示""资料中提到"这种书面腔。
         3. 面向面试：经常点出"这道题面试官在考什么""你可以这样答""记住这个关键词"。
         4. 结构化但自然：可以用分点、对比，但每一点都要像人在讲。
+        
+         # 排版规则（重要）
+        1. 答案要有清晰的标题分层，但标题层级整体比原文档降两级：不要用 #（一级，聊天里太大），顶层用 #####，子层用 ######。
+        2. 标题大小跟着内容走：内容丰富的部分用标题，简单的一句话用 **加粗** 即可，别为了标题而标题。
+        3. 别照搬原文档的标题字号和表格，按上面规则自己重新组织。
 
         # 硬性约束（任何时候不能违反）
         1. 只能基于【参考资料】回答，资料里没有的不要编造。
@@ -106,10 +111,48 @@ class Retriever:
         )
         return response.choices[0].message.content
 
-    def __call__(self, query):
-        rerank = self.search(query)
+    def __call__(self, query, top_n=config.RERANK_TOP_N):
+        rerank = self.search(query,top_n)
         context = "\n\n".join([self.texts[i] for i, _ in rerank])
+
         return self.generate(query, context)
+
+    def answer_with_sources(self, query, top_n=config.RERANK_TOP_N):
+        """跟 __call__ 一样，但额外返回命中的来源。"""
+        rerank = self.search(query, top_n)
+        context = "\n\n".join([self.texts[i] for i, _ in rerank])
+        sources = [
+            {
+                "chunk_id": i,
+                "heading": self.chunks[i].get("heading", ""),
+                "source": self.chunks[i].get("source", ""),
+            }
+            for i, _ in rerank
+        ]
+        return self.generate(query, context), sources
+
+    def generate_stream(self, query, context):
+        """流式生成：逐个 yield (kind, text)，kind ∈ {'thinking', 'answer'}。"""
+        user_prompt = f"【参考资料】\n{context}\n\n【用户问题】\n{query}"
+        stream = self.ds_client.chat.completions.create(
+            model=config.DEEPSEEK_CHAT_MODEL,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+            stream=True,
+            extra_body={"thinking": {"type": "enabled"}},
+        )
+        for chunk in stream:
+            if not chunk.choices:
+                continue
+            delta = chunk.choices[0].delta
+            rc = getattr(delta, "reasoning_content", None)
+            if rc:
+                yield "thinking", rc
+            c = getattr(delta, "content", None)
+            if c:
+                yield "answer", c
 if __name__ == "__main__":
     # 测试用：实例化 Retriever，搜一个问题，打印命中的 chunk 标题
     retriever = Retriever()

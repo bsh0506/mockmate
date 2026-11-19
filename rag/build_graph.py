@@ -6,7 +6,7 @@ from lightrag.llm.openai import openai_complete_if_cache, openai_embed
 from lightrag.utils import EmbeddingFunc
 import config
 
-WORKING_DIR = "./data/lightrag"   # 图谱存储目录
+WORKING_DIR = str(config.DATA_DIR / "lightrag")  # 图谱存储目录
 
 
 async def llm_model_func(prompt, system_prompt=None, history_messages=[], keyword_extraction=False, **kwargs) -> str:

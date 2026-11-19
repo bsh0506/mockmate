@@ -5,13 +5,13 @@ from openai import OpenAI
 from lightrag import LightRAG, QueryParam
 from lightrag.llm.openai import openai_complete_if_cache, openai_embed
 from lightrag.utils import EmbeddingFunc
-from retrieve import Retriever
+from rag.retrieve import Retriever
 import config
 
 for name in ("lightrag", "httpx2", "openai"):
     logging.getLogger(name).setLevel(logging.ERROR)   # 压掉 LightRAG 的 INFO 日志
 
-WORKING_DIR = "./data/lightrag"
+WORKING_DIR = str(config.DATA_DIR / "lightrag")
 
 
 async def llm_model_func(prompt, system_prompt=None, history_messages=[], keyword_extraction=False, **kwargs):
@@ -62,7 +62,35 @@ class HybridAssistant:
             context = await self.rag.aquery(query, param=QueryParam(mode="hybrid")) # lightRag只负责检索
             return self.retriever.generate(query,context)
         return self.retriever(query)
+    async def answer_with_meta(self, query):
+        """跟 answer 一样，但返回 (answer, sources, path)。"""
 
+        path = self.route(query)
+        print(f"[路由到 {path}]")
+        if path == "lightrag":
+            context = await self.rag.aquery(query, param=QueryParam(mode="hybrid"))
+            return self.retriever.generate(query, context), [], path
+        answer, sources = self.retriever.answer_with_sources(query)
+        return answer, sources, path
+    async def answer_stream(self, query):
+        """流式回答：路由 → 检索 → yield (kind, text)。第一条是 ('meta', {...})。"""
+        path = self.route(query)
+        print(f"[路由到 {path}]")
+        if path == "lightrag":
+            context = await self.rag.aquery(query, param=QueryParam(mode="hybrid"))
+            sources = []
+        else:
+            rerank = self.retriever.search(query)
+            context = "\n\n".join([self.retriever.texts[i] for i, _ in rerank])
+            sources = [
+                {"chunk_id": i,
+                 "heading": self.retriever.chunks[i].get("heading", ""),
+                 "source": self.retriever.chunks[i].get("source", "")}
+                for i, _ in rerank
+            ]
+        yield "meta", {"path": path, "sources": sources}
+        for kind, text in self.retriever.generate_stream(query, context):
+            yield kind, text
     def close(self):
         self.retriever.qdrant.close()
 
